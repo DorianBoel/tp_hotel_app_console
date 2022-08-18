@@ -1,3 +1,3 @@
-let start = require("./presentation").start;
+import { start as appStart } from "./menu.js";
 
-start();
+appStart();
