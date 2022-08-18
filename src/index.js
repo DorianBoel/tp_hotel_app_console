@@ -1,1 +1,3 @@
-console.log("** Administration Hotel **");
+let start = require("./presentation").start;
+
+start();
