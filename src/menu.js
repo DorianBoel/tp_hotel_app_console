@@ -1,44 +1,145 @@
 import { createInterface } from "readline";
-import { menuLines, display, displayMenu } from "./display.js";
+import { getAllClients } from "./service.js";
+import { display, displayMenu, displayClientList } from "./display.js";
 
-const rl = createInterface({ 
+const REDISPLAY_LINE = "M pour réafficher le menu";
+
+const RL = createInterface({ 
     input: process.stdin,
     output: process.stdout
 });
 
-function start() {
-    console.log("** Administration Hotel **");
-    displayMenu();
-    prompt();
+const MENU_LINES = {
+    1: {
+        opt: "Lister les clients",
+        fn: () => {
+            console.log("Liste des clients :");
+            displayClientList(getAllClients());
+            display(REDISPLAY_LINE);
+        }
+    },
+    3: {
+        opt: "Rechercher un client par nom",
+        fn: async () => {
+            await promptSearch().then(
+                (query) => {
+                    return searchClient(query);
+                }, (err) => {
+                    if (err === "exit") {
+                        displayMenu();
+                    }
+                }
+            ).then(
+                (result) => {
+                    display(`Client trouvé: ${clientToString(result)}`);
+                    console.log("3 pour effectuer une nouvelle recherche");
+                    display(REDISPLAY_LINE);
+                }, (err) => {
+                    console.log("3 pour effectuer une nouvelle recherche");
+                    display(REDISPLAY_LINE);
+                }
+            ).catch((err) => {
+                display(err);
+            });
+        }
+    },
+    9: {
+        opt: "Quitter"
+    },
+    M: {
+        opt: "Réafficher ce menu",
+        fn: () => displayMenu(MENU_LINES)
+    }
+}
+
+let rlSwitch = true;
+
+async function start() {
+    display("** Administration Hotel **");
+    displayMenu(MENU_LINES);
+    while (rlSwitch) {
+        await prompt().then(
+            (option) => selectOption(option),
+            (err) => {
+                throw err;
+            }
+        ).then(
+            (fn) => fn(),
+            (err) => {
+                throw err;
+            }
+        ).catch((err) => {
+            if (err === "exit") {
+                rlSwitch = false;
+            } else {
+                display(err);
+            }
+        });
+    }
 }
 
 function prompt() {
-    rl.question(
-        "",
-        (answer) => {
-            if (answer === "99") {
-                rl.close();
+    return new Promise((resolve, reject) => {      
+        RL.question("> ", (answer) => {
+            answer = answer.trim();
+            if (answer === "9") {
+                rlSwitch = false;
+                RL.close();
                 display("Au revoir");
+                reject("exit");
                 return;
             }
-            selectOption(answer);
-            prompt();
-        }
-    );
+            resolve(answer);
+        });
+    });
 }
 
 function selectOption(index) {
-    if (index in menuLines) {
-        let line = menuLines[index];
-        if (line.fn !== undefined) {
-            line.fn();
+    return new Promise((resolve, reject) => {
+        if (index in MENU_LINES) {
+            let line = MENU_LINES[index];
+            resolve(line.fn);
             return;
+        };
+        reject("Option invalide");
+    });
+}
+
+function promptSearch() {
+    return new Promise((resolve, reject) => {
+        RL.question(
+            "Rentrez le nom ou prenom d'un client :\n> ",
+            (answer) => {
+                answer = answer.trim();
+                if (!answer) {
+                    reject("exit");
+                    return;
+                }
+                resolve(answer);
+            }
+        );
+    });
+}
+
+function searchClient(query) {
+    return new Promise((resolve, reject) => {
+        let clients = getAllClients();
+        for (let client of clients) {
+            if (client.nom.toLowerCase() === query.toLowerCase() || client.prenom.toLowerCase() === query.toLowerCase()) {
+                resolve(client);
+                return;
+            }
         }
-        display(line.message);
-        return;
-    };
-    display("Option invalide");
-    return;
+        display(`0 résultat trouvé pour "${query}"`);
+        reject();
+    })
+}
+
+function clientToString(client) {
+    if (!client.nom || !client.prenom) {
+        throw "Erreur : données client incomplètes";
+    }
+    return `${client.nom.toUpperCase()} ${client.prenom}`;
 }
 
 export { start };
