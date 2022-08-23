@@ -1,6 +1,6 @@
 import { createInterface } from "readline";
-import { getAllClients } from "./service.js";
-import { display, displayMenu, displayClientList } from "./display.js";
+import { getAllClients } from "./service";
+import { display, displayMenu, displayClientList } from "./display";
 
 const REDISPLAY_LINE = "M pour réafficher le menu";
 
@@ -9,7 +9,7 @@ const RL = createInterface({
     output: process.stdout
 });
 
-const MENU_LINES = {
+const MENU_LINES: any = {
     1: {
         opt: "Lister les clients",
         fn: () => {
@@ -22,11 +22,11 @@ const MENU_LINES = {
         opt: "Rechercher un client par nom",
         fn: async () => {
             await promptSearch().then(
-                (query) => {
+                (query: any) => {
                     return searchClient(query);
                 }, (err) => {
                     if (err === "exit") {
-                        displayMenu();
+                        displayMenu(MENU_LINES);
                     }
                 }
             ).then(
@@ -64,7 +64,11 @@ async function start() {
                 throw err;
             }
         ).then(
-            (fn) => fn(),
+            (fn) => {
+                if (fn instanceof Function) {
+                    fn();
+                }
+            },
             (err) => {
                 throw err;
             }
@@ -94,7 +98,7 @@ function prompt() {
     });
 }
 
-function selectOption(index) {
+function selectOption(index: any) {
     return new Promise((resolve, reject) => {
         if (index in MENU_LINES) {
             let line = MENU_LINES[index];
@@ -108,7 +112,7 @@ function selectOption(index) {
 function promptSearch() {
     return new Promise((resolve, reject) => {
         RL.question(
-            "Rentrez le nom ou prenom d'un client :\n> ",
+            "Rentrez le nom ou prénom d'un client :\n\n> ",
             (answer) => {
                 answer = answer.trim();
                 if (!answer) {
@@ -121,7 +125,7 @@ function promptSearch() {
     });
 }
 
-function searchClient(query) {
+function searchClient(query: string) {
     return new Promise((resolve, reject) => {
         let clients = getAllClients();
         for (let client of clients) {
@@ -135,7 +139,7 @@ function searchClient(query) {
     })
 }
 
-function clientToString(client) {
+function clientToString(client: any) {
     if (!client.nom || !client.prenom) {
         throw "Erreur : données client incomplètes";
     }

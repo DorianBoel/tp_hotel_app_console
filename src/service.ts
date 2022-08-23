@@ -1,4 +1,4 @@
-import json from "../client.json" assert {type: "json"};
+import json from "../client.json";
 
 function getAllClients() {
     return json;
