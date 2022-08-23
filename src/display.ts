@@ -1,9 +1,12 @@
-function display(message: string) {
+import { MenuLineMap } from "./definitions";
+import { Client } from "./domain";
+
+function display(message: string): void {
     console.log(message);
     console.log();
 }
 
-function displayMenu(menuLines: any) {
+function displayMenu(menuLines: MenuLineMap): void {
     console.log("Choisissez un option :");
     for (let line in menuLines) {
         console.log(` ${line}. ${menuLines[line].opt}`);
@@ -11,9 +14,9 @@ function displayMenu(menuLines: any) {
     console.log();
 }
 
-function displayClientList(clients: any) {
+function displayClientList(clients: Client[]): void {
     for (let client of clients) {
-        console.log(` ${client.nom.toUpperCase()} ${client.prenom}`)
+        console.log(` ${client.getFullName()}`)
     }
     console.log();
 }
