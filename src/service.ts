@@ -19,7 +19,7 @@ function searchClient(query: string): Promise<Client> {
                 return;
             }
         }
-        display(`0 résultat trouvé pour "${query}"`);
+        display(`0 résultats trouvés pour "${query}"`);
         reject();
     })
 }

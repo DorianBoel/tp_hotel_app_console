@@ -29,6 +29,7 @@ const MENU_LINES: MenuLineMap = {
                 }, (err): void => {
                     if (err === "exit") {
                         displayMenu(MENU_LINES);
+                        throw "";
                     }
                 }
             ).then(
@@ -41,7 +42,9 @@ const MENU_LINES: MenuLineMap = {
                     display(REDISPLAY_LINE);
                 }
             ).catch((err) => {
-                display(err);
+                if(err) {
+                    display(err);
+                }
             });
         }
     },
@@ -66,9 +69,9 @@ async function start(): Promise<void> {
                 throw err;
             }
         ).then(
-            (fn) => {
+            async (fn) => {
                 if (fn instanceof Function) {
-                    fn();
+                    await fn();
                 }
             },
             (err) => {
