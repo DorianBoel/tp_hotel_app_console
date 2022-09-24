@@ -1,8 +1,8 @@
 import { createInterface, Interface } from "readline";
-import { getAllClients, searchClient } from "./service";
-import { display, displayMenu, displayClientList } from "./display";
-import { Client } from "./domain";
 import { MenuLineMap } from "./definitions";
+import { display, displayClientList, displayMenu } from "./display";
+import { Client } from "./domain";
+import { addClient, getAllClients, searchClient } from "./service";
 
 const REDISPLAY_LINE: string = "M pour réafficher le menu";
 
@@ -16,8 +16,38 @@ const MENU_LINES: MenuLineMap = {
         opt: "Lister les clients",
         fn: async (): Promise<void>  => {
             console.log("Liste des clients :");
-            displayClientList(getAllClients());
+            displayClientList(await getAllClients());
             display(REDISPLAY_LINE);
+        }
+    },
+    2: {
+        opt: "Ajouter un client",
+        fn: async (): Promise<void> => {
+            display("Complétez les informations suivantes pour ajouter un client:");
+            await promptClientInfo().then(
+                (obj) => obj,
+                (err): void => {
+                    if (err === "exit") {
+                        displayMenu(MENU_LINES);
+                        throw "";
+                    }
+                }
+            ).then(
+                (obj) => {
+                    if (obj) {
+                        console.log(obj);
+                        addClient(obj);
+                    }
+                },
+                (err) => {
+                    throw err;
+                }
+            ).catch((err) => {
+                if (err) {
+                    display(err);
+                }
+                return;
+            });
         }
     },
     3: {
@@ -103,7 +133,7 @@ function prompt(): Promise<string | number> {
     });
 }
 
-function selectOption(index: number | string) {
+function selectOption(index: number | string): Promise<Function | undefined> {
     return new Promise((resolve, reject) => {
         if (index in MENU_LINES) {
             let line = MENU_LINES[index];
@@ -126,6 +156,37 @@ function promptSearch(): Promise<string> {
                 }
                 resolve(answer);
                 return;
+            }
+        );
+    });
+}
+
+function promptClientInfo(): Promise<{firstName: string, lastName: string}> {
+    return new Promise(async (resolve, reject) => {
+        try {
+            let firstName: string = await promptName("Prénom");
+            let lastName: string = await promptName("Nom de famille");
+            resolve({
+                firstName,
+                lastName
+            });
+        } catch (err) {
+            reject(err);
+        }
+    });
+}
+
+function promptName(message: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+        RL.question(
+            `${message}: `,
+            (answer) => {
+                answer = answer.trim();
+                if (!answer) {
+                    reject("exit");
+                    return;
+                }
+                resolve(answer);
             }
         );
     });

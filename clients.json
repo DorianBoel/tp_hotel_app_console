@@ -26,27 +26,27 @@
     },
     {
         "id": 6,
-        "nom":"DUPONT",
+        "nom": "Dupont",
         "prenom": "Adeline"
     },
     {
         "id": 7,
-        "nom":"PASSONI",
+        "nom": "Passoni",
         "prenom": "Fabienne"
     },
     {
         "id": 8,
-        "nom":"JEANPIERRE",
+        "nom": "Jeanpierre",
         "prenom": "Laurent"
     },
     {
         "id": 9,
-        "nom":"TROTOUX",
+        "nom": "Trotoux",
         "prenom": "Didier"
     },
     {
         "id": 10,
-        "nom":"TAYOU",
+        "nom": "Tayou",
         "prenom": "Robert"
     }
 ]
