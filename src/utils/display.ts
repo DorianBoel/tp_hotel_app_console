@@ -1,5 +1,5 @@
-import { MenuLineMap } from "./definitions";
-import { Client } from "./domain";
+import { MenuLineMap } from "../library/definitions";
+import { Client } from "../library/domain";
 
 function display(message: string): void {
     console.log(message);

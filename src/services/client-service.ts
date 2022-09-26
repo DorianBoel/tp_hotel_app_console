@@ -1,7 +1,7 @@
-import { display } from "./display";
-import { Client, ClientDTO } from "./domain";
+import { display } from "../utils/display";
+import { Client, ClientDTO } from "../library/domain";
 import { getClientJsonData, write } from "./repository";
-import { capitalize } from "./utils";
+import { capitalize } from "../utils/utils";
 
 function getAllClients(): Promise<Client[]> {
     return new Promise(async (resolve, reject) => {
@@ -14,16 +14,13 @@ function getAllClients(): Promise<Client[]> {
     });
 }
 
-async function getHighestId(): Promise<number> {
+async function autoIncrementId(): Promise<number> {
+    let id: number;
     let clients: Client[] = await getAllClients();
     let clientsId: number[] = clients.map((client) => client.id);
-    return clientsId.reduce((max: number, cur: number) => {
+    id = clientsId.reduce((max: number, cur: number) => {
         return max > cur ? max : cur;
     }, 0);
-}
-
-async function autoIncrementId(): Promise<number> {
-    let id: number = await getHighestId();
     return ++id;
 }
 
@@ -41,21 +38,20 @@ function searchClient(query: string): Promise<Client> {
     });
 }
 
-async function addClient(obj: { firstName: string; lastName: string; }): Promise<void> {
-    getClientJsonData().then(
+async function addClient(obj: { firstName: string; lastName: string; }): Promise<Client> {
+    return new Promise((resolve, reject) => getClientJsonData().then(
         async (clientData) => {
             let client: Client = new Client(await autoIncrementId(), capitalize(obj.firstName), capitalize(obj.lastName));
             let clients: ClientDTO[] = JSON.parse(clientData);
             if (Array.isArray(clients)) {
                 clients.push(client.toDTO());
             } else {
-                throw "err";
+                reject("err");
             }
             write(JSON.stringify(clients, null, "    "));
+            resolve(client);
         }
-    ).catch((err) => {
-        console.log(err);
-    });
+    ));
 }
 
 export { getAllClients, searchClient, addClient };

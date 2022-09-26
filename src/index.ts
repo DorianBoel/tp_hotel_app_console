@@ -1,3 +1,3 @@
-import { start as appStart } from "./menu";
+import { start as appStart } from "./controllers/menu";
 
 appStart();

@@ -1,15 +1,10 @@
-import { createInterface, Interface } from "readline";
-import { MenuLineMap } from "./definitions";
-import { display, displayClientList, displayMenu } from "./display";
-import { Client } from "./domain";
-import { addClient, getAllClients, searchClient } from "./service";
+import { MenuLineMap } from "../library/definitions";
+import { display, displayClientList, displayMenu } from "../utils/display";
+import { Client } from "../library/domain";
+import { isOn, prompt, promptClientInfo, promptSearch, rlOff } from "../services/readline";
+import { addClient, getAllClients, searchClient } from "../services/client-service";
 
 const REDISPLAY_LINE: string = "M pour réafficher le menu";
-
-const RL: Interface = createInterface({ 
-    input: process.stdin,
-    output: process.stdout
-});
 
 const MENU_LINES: MenuLineMap = {
     1: {
@@ -35,8 +30,18 @@ const MENU_LINES: MenuLineMap = {
             ).then(
                 (obj) => {
                     if (obj) {
-                        console.log(obj);
-                        addClient(obj);
+                        return addClient(obj);
+                    }
+                },
+                (err) => {
+                    throw err;
+                }
+            ).then(
+                (client) => {
+                    if (client) {
+                        display(`\nNouveau client ajouté: ${client.getFullName()}`);
+                        console.log("2 pour ajouter un autre client");
+                        display(REDISPLAY_LINE);
                     }
                 },
                 (err) => {
@@ -87,12 +92,10 @@ const MENU_LINES: MenuLineMap = {
     }
 }
 
-let rlSwitch: boolean = true;
-
 async function start(): Promise<void> {
     display("** Administration Hotel **");
     displayMenu(MENU_LINES);
-    while (rlSwitch) {
+    while (isOn()) {
         await prompt().then(
             async (option: string | number) => await selectOption(option),
             (err) => {
@@ -109,28 +112,12 @@ async function start(): Promise<void> {
             }
         ).catch((err) => {
             if (err === "exit") {
-                rlSwitch = false;
+                rlOff();
             } else {
                 display(err);
             }
         });
     }
-}
-
-function prompt(): Promise<string | number> {
-    return new Promise((resolve, reject) => {      
-        RL.question("> ", (answer: string) => {
-            answer = answer.trim();
-            if (answer === "9") {
-                rlSwitch = false;
-                RL.close();
-                display("Au revoir");
-                reject("exit");
-                return;
-            }
-            resolve(answer);
-        });
-    });
 }
 
 function selectOption(index: number | string): Promise<Function | undefined> {
@@ -141,54 +128,6 @@ function selectOption(index: number | string): Promise<Function | undefined> {
             return;
         };
         reject("Option invalide");
-    });
-}
-
-function promptSearch(): Promise<string> {
-    return new Promise((resolve, reject) => {
-        RL.question(
-            "Rentrez le nom ou prénom d'un client :\n\n> ",
-            (answer) => {
-                answer = answer.trim();
-                if (!answer) {
-                    reject("exit");
-                    return;
-                }
-                resolve(answer);
-                return;
-            }
-        );
-    });
-}
-
-function promptClientInfo(): Promise<{firstName: string, lastName: string}> {
-    return new Promise(async (resolve, reject) => {
-        try {
-            let firstName: string = await promptName("Prénom");
-            let lastName: string = await promptName("Nom de famille");
-            resolve({
-                firstName,
-                lastName
-            });
-        } catch (err) {
-            reject(err);
-        }
-    });
-}
-
-function promptName(message: string): Promise<string> {
-    return new Promise((resolve, reject) => {
-        RL.question(
-            `${message}: `,
-            (answer) => {
-                answer = answer.trim();
-                if (!answer) {
-                    reject("exit");
-                    return;
-                }
-                resolve(answer);
-            }
-        );
     });
 }
 
